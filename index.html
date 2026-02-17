@@ -407,6 +407,78 @@
             color: var(--text-secondary);
         }
 
+        /* Resumen Sencillo */
+        .resumen-sencillo-section {
+            grid-column: span 12;
+        }
+
+        .resumen-sencillo {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 1.5rem;
+        }
+
+        .resumen-texto {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: var(--text-primary);
+        }
+
+        .resumen-texto strong {
+            color: var(--accent-primary);
+            font-weight: 700;
+        }
+
+        .resumen-texto .numero {
+            font-family: 'Space Mono', monospace;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 6px;
+            background: var(--bg-elevated);
+        }
+
+        .resumen-texto .numero.malo {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--accent-danger);
+        }
+
+        .resumen-texto .numero.warning {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--accent-warning);
+        }
+
+        .resumen-texto .numero.bueno {
+            background: rgba(5, 150, 105, 0.15);
+            color: var(--accent-primary);
+        }
+
+        .resumen-detalle {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .resumen-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+        }
+
+        .resumen-item-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .resumen-item-value {
+            font-family: 'Space Mono', monospace;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
         /* Year Controls */
         .year-controls {
             display: flex;
@@ -504,21 +576,19 @@
 
         .mes-amount {
             position: absolute;
-            top: 50%;
+            top: 8px;
             left: 50%;
-            transform: translate(-50%, -50%);
+            transform: translateX(-50%);
             font-family: 'Space Mono', monospace;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             font-weight: 700;
             color: var(--text-primary);
             text-align: center;
             z-index: 2;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-
-        .mes-bar-container:hover .mes-amount {
-            opacity: 1;
+            background: var(--bg-card);
+            padding: 2px 6px;
+            border-radius: 4px;
+            white-space: nowrap;
         }
 
         .mes-label {
@@ -555,19 +625,15 @@
         .mes-input-wrapper {
             display: none;
             position: absolute;
-            top: 50%;
+            bottom: 8px;
             left: 50%;
-            transform: translate(-50%, -50%);
+            transform: translateX(-50%);
             z-index: 10;
-            width: 90%;
+            width: 85%;
         }
 
         .mes-bar-container.active .mes-input-wrapper {
             display: block;
-        }
-
-        .mes-bar-container.active .mes-amount {
-            display: none;
         }
 
         .mes-input {
@@ -811,14 +877,28 @@
                 </div>
             </section>
 
-            <!-- Alert Banner -->
+            <!-- Estado Simple -->
             <div id="alertBanner" class="alert-banner ok">
                 <span class="alert-icon">✅</span>
                 <div class="alert-content">
-                    <h3>Estado Financiero Saludable</h3>
-                    <p>Los gastos están dentro del rango del sueldo mensual.</p>
+                    <h3>Todo bien</h3>
+                    <p>Configurá el sueldo para ver el análisis.</p>
                 </div>
             </div>
+
+            <!-- Resumen Sencillo -->
+            <section class="card resumen-sencillo-section">
+                <div class="card-header">
+                    <div class="card-icon green">🧮</div>
+                    <div>
+                        <div class="card-title">¿Cómo venimos?</div>
+                        <div class="card-subtitle">Resumen simple de la situación</div>
+                    </div>
+                </div>
+                <div class="resumen-sencillo" id="resumenSencillo">
+                    <p class="resumen-texto">Ingresá el sueldo y los gastos para ver el análisis.</p>
+                </div>
+            </section>
 
             <!-- Límite Disponible - Círculo -->
             <section class="card limite-section">
@@ -866,18 +946,18 @@
                 <div class="card-header">
                     <div class="card-icon orange">📈</div>
                     <div>
-                        <div class="card-title">Resumen Rápido</div>
-                        <div class="card-subtitle">Métricas importantes</div>
+                        <div class="card-title">Números Clave</div>
+                        <div class="card-subtitle">Datos del período</div>
                     </div>
                 </div>
                 <div class="status-grid">
                     <div class="status-item">
-                        <div class="status-value positive" id="ratioGastoSueldo">0%</div>
-                        <div class="status-label">Gasto/Sueldo</div>
+                        <div class="status-value" id="gastoMesActualDisplay">$0</div>
+                        <div class="status-label">Gasto Este Mes</div>
                     </div>
                     <div class="status-item">
-                        <div class="status-value info" id="sueldosNecesarios">0</div>
-                        <div class="status-label">Sueldos Necesarios</div>
+                        <div class="status-value" id="sueldoDisplay">$0</div>
+                        <div class="status-label">Sueldo</div>
                     </div>
                     <div class="status-item">
                         <div class="status-value" id="promedioMensual">$0</div>
@@ -890,14 +970,14 @@
                 </div>
                 <div class="info-grid" style="margin-top: 1.5rem;">
                     <div class="info-card">
-                        <h4>Deuda Acumulada</h4>
+                        <h4>Total Consumido</h4>
                         <div class="info-value" id="deudaTotal">$0</div>
-                        <div class="info-detail">Total a pagar en resúmenes</div>
+                        <div class="info-detail">Límite usado en la tarjeta</div>
                     </div>
                     <div class="info-card">
-                        <h4>Margen Disponible</h4>
-                        <div class="info-value positive" id="margenDisponible">$0</div>
-                        <div class="info-detail">Después de cubrir gastos</div>
+                        <h4>Disponible en Tarjeta</h4>
+                        <div class="info-value positive" id="disponibleTarjeta">$0</div>
+                        <div class="info-detail">Lo que podés gastar aún</div>
                     </div>
                 </div>
             </section>
@@ -1217,22 +1297,13 @@
             const mesesConGasto = gastosMensuales.filter(g => g > 0).length;
             const promedio = mesesConGasto > 0 ? totalGastos / mesesConGasto : 0;
             
-            // Ratio gasto/sueldo (próximo resumen - mes actual)
+            // Mes actual
             const mesActual = new Date().getMonth();
             const gastoMesActual = gastosMensuales[mesActual];
-            const ratio = sueldo > 0 ? (gastoMesActual / sueldo) * 100 : 0;
             
-            const ratioElement = document.getElementById('ratioGastoSueldo');
-            ratioElement.textContent = `${Math.round(ratio)}%`;
-            ratioElement.className = 'status-value ' + (ratio > 100 ? 'danger' : ratio > 80 ? 'warning' : 'positive');
-            
-            // Sueldos necesarios
-            const sueldosNecesarios = sueldo > 0 ? Math.ceil(gastoMesActual / sueldo) : 0;
-            const sueldosElement = document.getElementById('sueldosNecesarios');
-            sueldosElement.textContent = sueldosNecesarios;
-            sueldosElement.className = 'status-value ' + (sueldosNecesarios > 1 ? 'danger' : 'info');
-            
-            // Promedio mensual
+            // Display básicos
+            document.getElementById('gastoMesActualDisplay').textContent = formatCurrency(gastoMesActual);
+            document.getElementById('sueldoDisplay').textContent = formatCurrency(sueldo);
             document.getElementById('promedioMensual').textContent = formatCurrency(promedio);
             
             // Mes máximo gasto (con año)
@@ -1242,7 +1313,7 @@
             document.getElementById('mesMaxGasto').textContent = maxGasto > 0 ? 
                 `${MESES[mesMax]} '${String(mesMaxYear).slice(-2)}` : '-';
             
-            // Totales
+            // Totales del período
             document.getElementById('totalAnual').textContent = formatCurrency(totalGastos);
             document.getElementById('promedioAnual').textContent = formatCurrency(promedio);
             
@@ -1250,9 +1321,9 @@
             const mesesSobre = sueldo > 0 ? gastosMensuales.filter(g => g > sueldo).length : 0;
             const mesesSobreElement = document.getElementById('mesesSobreSueldo');
             mesesSobreElement.textContent = mesesSobre;
-            mesesSobreElement.className = 'status-value ' + (mesesSobre > 0 ? 'danger' : 'positive');
+            mesesSobreElement.className = 'summary-value ' + (mesesSobre > 0 ? 'danger' : 'positive');
             
-            // Tendencia (basada en los últimos 3 meses con datos)
+            // Tendencia
             const mesesConDatos = gastosMensuales
                 .map((g, i) => ({ gasto: g, index: i }))
                 .filter(m => m.gasto > 0);
@@ -1266,51 +1337,69 @@
             }
             document.getElementById('tendencia').textContent = tendencia;
             
-            // Deuda total y margen
+            // Tarjeta: consumido y disponible
             const limiteTotal = parseFloat(document.getElementById('limiteTotal').value) || 0;
             const limiteDisponible = parseFloat(document.getElementById('limiteDisponible').value) || 0;
-            const deuda = limiteTotal - limiteDisponible;
+            const consumido = limiteTotal - limiteDisponible;
             
-            document.getElementById('deudaTotal').textContent = formatCurrency(Math.max(0, deuda));
+            document.getElementById('deudaTotal').textContent = formatCurrency(Math.max(0, consumido));
+            document.getElementById('disponibleTarjeta').textContent = formatCurrency(limiteDisponible);
             
-            const margen = sueldo - gastoMesActual;
-            const margenElement = document.getElementById('margenDisponible');
-            margenElement.textContent = formatCurrency(margen);
-            margenElement.className = 'info-value ' + (margen < 0 ? 'danger' : 'positive');
+            // Calcular sueldos necesarios para pagar el consumo actual
+            const sueldosNecesarios = sueldo > 0 ? Math.ceil(consumido / sueldo) : 0;
+            const sueldosExcedidos = Math.max(0, sueldosNecesarios - 1);
             
-            return { ratio, sueldosNecesarios, mesesSobre, margen, gastoMesActual, promedio };
+            return { 
+                sueldo,
+                gastoMesActual, 
+                promedio, 
+                mesesSobre, 
+                consumido,
+                limiteDisponible,
+                sueldosNecesarios,
+                sueldosExcedidos,
+                totalGastos
+            };
         }
 
         // Update alert banner
         function updateAlert(stats) {
             const banner = document.getElementById('alertBanner');
-            const sueldo = parseFloat(document.getElementById('sueldo').value) || 0;
             
-            if (sueldo === 0) {
+            if (stats.sueldo === 0) {
                 banner.className = 'alert-banner ok';
                 banner.innerHTML = `
                     <span class="alert-icon">ℹ️</span>
                     <div class="alert-content">
-                        <h3>Configurá tu sueldo</h3>
-                        <p>Ingresá el sueldo mensual para obtener análisis detallados.</p>
+                        <h3>Falta el sueldo</h3>
+                        <p>Ingresá el sueldo mensual arriba para ver si estamos bien o mal.</p>
                     </div>
                 `;
-            } else if (stats.sueldosNecesarios > 1) {
+            } else if (stats.sueldosExcedidos >= 2) {
                 banner.className = 'alert-banner danger';
+                banner.innerHTML = `
+                    <span class="alert-icon">🚨</span>
+                    <div class="alert-content">
+                        <h3>Estamos complicados</h3>
+                        <p>Hay que esperar ${stats.sueldosNecesarios} sueldos para cubrir todo.</p>
+                    </div>
+                `;
+            } else if (stats.sueldosExcedidos === 1) {
+                banner.className = 'alert-banner warning';
                 banner.innerHTML = `
                     <span class="alert-icon">⚠️</span>
                     <div class="alert-content">
-                        <h3>¡Atención! Necesitás ${stats.sueldosNecesarios} sueldos</h3>
-                        <p>El gasto del mes actual (${formatCurrency(stats.gastoMesActual)}) excede tu sueldo. Vas a necesitar esperar más de un cobro para cubrir el resumen.</p>
+                        <h3>Un poco pasados</h3>
+                        <p>Necesitamos 2 sueldos para pagar el consumo de la tarjeta.</p>
                     </div>
                 `;
-            } else if (stats.ratio > 80) {
+            } else if (stats.consumido > stats.sueldo * 0.8) {
                 banner.className = 'alert-banner warning';
                 banner.innerHTML = `
-                    <span class="alert-icon">⚡</span>
+                    <span class="alert-icon">👀</span>
                     <div class="alert-content">
-                        <h3>Gastos elevados este mes</h3>
-                        <p>Estás usando el ${Math.round(stats.ratio)}% de tu sueldo en la tarjeta. Considerá reducir gastos.</p>
+                        <h3>Ojo, estamos al límite</h3>
+                        <p>El consumo está cerca de todo el sueldo.</p>
                     </div>
                 `;
             } else {
@@ -1318,60 +1407,162 @@
                 banner.innerHTML = `
                     <span class="alert-icon">✅</span>
                     <div class="alert-content">
-                        <h3>Estado Financiero Saludable</h3>
-                        <p>Los gastos están dentro del rango de tu sueldo mensual. Margen disponible: ${formatCurrency(stats.margen)}</p>
+                        <h3>Todo bien</h3>
+                        <p>El consumo se puede pagar con un sueldo.</p>
                     </div>
                 `;
             }
         }
 
+        // Update resumen sencillo - el texto claro
+        function updateResumenSencillo(stats) {
+            const container = document.getElementById('resumenSencillo');
+            
+            if (stats.sueldo === 0) {
+                container.innerHTML = `
+                    <p class="resumen-texto">
+                        👆 Ingresá el sueldo mensual arriba para ver el análisis.
+                    </p>
+                `;
+                return;
+            }
+
+            if (stats.consumido === 0) {
+                container.innerHTML = `
+                    <p class="resumen-texto">
+                        No hay consumo en la tarjeta todavía. El sueldo es de <span class="numero bueno">${formatCurrency(stats.sueldo)}</span>.
+                    </p>
+                `;
+                return;
+            }
+
+            let texto = '';
+            let detalle = '';
+            
+            // La explicación principal
+            if (stats.sueldosExcedidos === 0) {
+                texto = `
+                    <p class="resumen-texto">
+                        Tenemos <span class="numero bueno">${formatCurrency(stats.consumido)}</span> gastados en la tarjeta.<br>
+                        Como el sueldo es de <span class="numero">${formatCurrency(stats.sueldo)}</span>, <strong>con un sueldo alcanza para pagar</strong>.
+                    </p>
+                `;
+                
+                const sobra = stats.sueldo - stats.consumido;
+                if (sobra > 0) {
+                    detalle = `
+                        <div class="resumen-detalle">
+                            <div class="resumen-item">
+                                <span class="resumen-item-label">Sobra del sueldo:</span>
+                                <span class="resumen-item-value" style="color: var(--accent-primary)">${formatCurrency(sobra)}</span>
+                            </div>
+                            <div class="resumen-item">
+                                <span class="resumen-item-label">Porcentaje usado:</span>
+                                <span class="resumen-item-value">${Math.round(stats.consumido / stats.sueldo * 100)}%</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            } else if (stats.sueldosExcedidos === 1) {
+                const falta = stats.consumido - stats.sueldo;
+                texto = `
+                    <p class="resumen-texto">
+                        Tenemos <span class="numero warning">${formatCurrency(stats.consumido)}</span> gastados en la tarjeta.<br>
+                        El sueldo es de <span class="numero">${formatCurrency(stats.sueldo)}</span>, así que <strong>necesitamos esperar 2 sueldos</strong> para pagar todo.<br><br>
+                        Básicamente: con el primer sueldo pagamos ${formatCurrency(stats.sueldo)}, y nos quedan <span class="numero warning">${formatCurrency(falta)}</span> que hay que cubrir con el segundo sueldo.
+                    </p>
+                `;
+                detalle = `
+                    <div class="resumen-detalle">
+                        <div class="resumen-item">
+                            <span class="resumen-item-label">Excedido en:</span>
+                            <span class="resumen-item-value" style="color: var(--accent-warning)">${formatCurrency(falta)}</span>
+                        </div>
+                        <div class="resumen-item">
+                            <span class="resumen-item-label">Sueldos necesarios:</span>
+                            <span class="resumen-item-value" style="color: var(--accent-warning)">2</span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                const falta = stats.consumido - stats.sueldo;
+                texto = `
+                    <p class="resumen-texto">
+                        Tenemos <span class="numero malo">${formatCurrency(stats.consumido)}</span> gastados en la tarjeta.<br>
+                        El sueldo es de <span class="numero">${formatCurrency(stats.sueldo)}</span>, así que <strong>necesitamos ${stats.sueldosNecesarios} sueldos</strong> para pagar todo.<br><br>
+                        Estamos excedidos en <span class="numero malo">${formatCurrency(falta)}</span> (${stats.sueldosExcedidos} ${stats.sueldosExcedidos === 1 ? 'sueldo' : 'sueldos'} de más).
+                    </p>
+                `;
+                detalle = `
+                    <div class="resumen-detalle">
+                        <div class="resumen-item">
+                            <span class="resumen-item-label">Excedido en:</span>
+                            <span class="resumen-item-value" style="color: var(--accent-danger)">${formatCurrency(falta)}</span>
+                        </div>
+                        <div class="resumen-item">
+                            <span class="resumen-item-label">Sueldos necesarios:</span>
+                            <span class="resumen-item-value" style="color: var(--accent-danger)">${stats.sueldosNecesarios}</span>
+                        </div>
+                        <div class="resumen-item">
+                            <span class="resumen-item-label">Sueldos de más:</span>
+                            <span class="resumen-item-value" style="color: var(--accent-danger)">${stats.sueldosExcedidos}</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = texto + detalle;
+        }
+
         // Update recommendations
         function updateRecomendaciones(stats) {
             const container = document.getElementById('recomendaciones');
-            const sueldo = parseFloat(document.getElementById('sueldo').value) || 0;
             const limiteTotal = parseFloat(document.getElementById('limiteTotal').value) || 0;
             
             let recomendaciones = [];
             
-            if (stats.sueldosNecesarios > 1) {
+            if (stats.sueldosExcedidos >= 2) {
+                const reducir = stats.consumido - stats.sueldo;
                 recomendaciones.push({
-                    icon: '🔴',
-                    title: 'Reducir Gastos Urgente',
-                    text: `Necesitás reducir ${formatCurrency(stats.gastoMesActual - sueldo)} para cubrir con un solo sueldo.`
+                    icon: '💡',
+                    title: 'Para volver a 1 sueldo',
+                    text: `Hay que reducir ${formatCurrency(reducir)} del consumo total.`
                 });
             }
             
-            if (stats.mesesSobre > 3) {
+            if (stats.mesesSobre > 3 && stats.sueldo > 0) {
                 recomendaciones.push({
                     icon: '📊',
-                    title: 'Patrón de Exceso',
-                    text: `${stats.mesesSobre} de 12 meses excedieron tu sueldo. Revisá tus hábitos de consumo.`
+                    title: 'Patrón de exceso',
+                    text: `En ${stats.mesesSobre} meses gastaste más que el sueldo.`
                 });
             }
             
-            const usoLimite = limiteTotal > 0 ? ((limiteTotal - parseFloat(document.getElementById('limiteDisponible').value)) / limiteTotal) * 100 : 0;
+            const usoLimite = limiteTotal > 0 ? (stats.consumido / limiteTotal) * 100 : 0;
             if (usoLimite > 70) {
                 recomendaciones.push({
                     icon: '💳',
-                    title: 'Límite Alto',
-                    text: `Estás usando el ${Math.round(usoLimite)}% de tu límite total. Cuidado con nuevos gastos.`
+                    title: 'Límite de tarjeta',
+                    text: `Usaste el ${Math.round(usoLimite)}% del límite total de la tarjeta.`
                 });
             }
             
-            if (stats.promedio > 0 && sueldo > 0) {
-                const proyeccion = stats.promedio * 12;
-                recomendaciones.push({
-                    icon: '📈',
-                    title: 'Proyección Anual',
-                    text: `A este ritmo, gastarás ${formatCurrency(proyeccion)} en el año (${Math.round(proyeccion / sueldo / 12 * 100)}% del sueldo promedio).`
-                });
+            if (stats.limiteDisponible > 0 && stats.sueldo > 0) {
+                const mesesDisponibles = Math.floor(stats.limiteDisponible / stats.promedio) || 0;
+                if (mesesDisponibles > 0 && stats.promedio > 0) {
+                    recomendaciones.push({
+                        icon: '📅',
+                        title: 'Disponible para',
+                        text: `Al ritmo actual, el límite alcanza para ~${mesesDisponibles} ${mesesDisponibles === 1 ? 'mes' : 'meses'} más.`
+                    });
+                }
             }
             
             if (recomendaciones.length === 0) {
                 recomendaciones.push({
-                    icon: '🎯',
-                    title: 'Todo en Orden',
-                    text: 'Tus gastos están controlados. ¡Seguí así!'
+                    icon: '👍',
+                    title: 'Todo en orden',
+                    text: 'Los gastos están controlados.'
                 });
             }
             
@@ -1389,6 +1580,7 @@
             updateCircularProgress();
             const stats = updateStats();
             updateAlert(stats);
+            updateResumenSencillo(stats);
             updateRecomendaciones(stats);
         }
 
