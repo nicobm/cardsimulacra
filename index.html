@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Gastos - Tarjeta de Crédito</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Light mode (default) */
+            --bg-primary: #f8fafc;
+            --bg-secondary: #f1f5f9;
+            --bg-card: #ffffff;
+            --bg-elevated: #e2e8f0;
+            --accent-primary: #059669;
+            --accent-secondary: #7c3aed;
+            --accent-warning: #d97706;
+            --accent-danger: #dc2626;
+            --accent-info: #2563eb;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --gradient-primary: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            --gradient-secondary: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+            --gradient-warning: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+            --gradient-danger: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+            --shadow-glow: 0 0 40px rgba(5, 150, 105, 0.1);
+            --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.08);
+            --input-bg: #f1f5f9;
+            --circle-bg: #e2e8f0;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-primary: #0a0a0f;
+                --bg-secondary: #12121a;
+                --bg-card: #1a1a24;
+                --bg-elevated: #22222e;
+                --accent-primary: #00d4aa;
+                --accent-secondary: #7c3aed;
+                --accent-warning: #f59e0b;
+                --accent-danger: #ef4444;
+                --accent-info: #3b82f6;
+                --text-primary: #f8fafc;
+                --text-secondary: #94a3b8;
+                --text-muted: #64748b;
+                --border-color: #2a2a3a;
+                --gradient-primary: linear-gradient(135deg, #00d4aa 0%, #00b894 100%);
+                --gradient-secondary: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+                --gradient-warning: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+                --gradient-danger: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+                --shadow-glow: 0 0 40px rgba(0, 212, 170, 0.15);
+                --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+                --input-bg: #12121a;
+                --circle-bg: #22222e;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 400px;
+            background: radial-gradient(ellipse at center, rgba(0, 212, 170, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        /* Grid Layout */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 1.5rem;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 1.75rem;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-card);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .card-icon.green { background: rgba(0, 212, 170, 0.15); }
+        .card-icon.purple { background: rgba(124, 58, 237, 0.15); }
+        .card-icon.orange { background: rgba(245, 158, 11, 0.15); }
+        .card-icon.blue { background: rgba(59, 130, 246, 0.15); }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .card-subtitle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Sueldo Section */
+        .sueldo-section {
+            grid-column: span 12;
+        }
+
+        .sueldo-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .input-group label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-prefix {
+            position: absolute;
+            left: 1rem;
+            color: var(--text-muted);
+            font-family: 'Space Mono', monospace;
+            font-weight: 700;
+        }
+
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 1rem 1rem 1rem 2.5rem;
+            background: var(--input-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-family: 'Space Mono', monospace;
+            font-size: 1.25rem;
+            font-weight: 700;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        select {
+            padding: 1rem;
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+        }
+
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.1);
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            input[type="number"]:focus,
+            select:focus {
+                box-shadow: 0 0 0 4px rgba(0, 212, 170, 0.1);
+            }
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            opacity: 1;
+        }
+
+        /* Circular Progress - Límite Disponible */
+        .limite-section {
+            grid-column: span 6;
+        }
+
+        .circular-progress-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .circular-progress {
+            position: relative;
+            width: 220px;
+            height: 220px;
+        }
+
+        .circular-progress svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+
+        .circular-progress circle {
+            fill: none;
+            stroke-width: 12;
+            stroke-linecap: round;
+        }
+
+        .circular-progress .bg {
+            stroke: var(--circle-bg);
+        }
+
+        .circular-progress .progress {
+            stroke: url(#progressGradient);
+            transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .circular-progress .center-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+
+        .circular-progress .amount {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .circular-progress .label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        .circular-progress .percentage {
+            font-size: 0.9rem;
+            color: var(--accent-primary);
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .limite-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            width: 100%;
+        }
+
+        /* Status Indicators */
+        .status-section {
+            grid-column: span 6;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .status-item {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 1.25rem;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .status-value {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .status-value.positive { color: var(--accent-primary); }
+        .status-value.warning { color: var(--accent-warning); }
+        .status-value.danger { color: var(--accent-danger); }
+        .status-value.info { color: var(--accent-info); }
+
+        .status-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Alert Banner */
+        .alert-banner {
+            grid-column: span 12;
+            padding: 1.25rem 1.5rem;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.5s ease;
+        }
+
+        .alert-banner.ok {
+            background: linear-gradient(135deg, rgba(0, 212, 170, 0.1) 0%, rgba(0, 184, 148, 0.05) 100%);
+            border: 1px solid rgba(0, 212, 170, 0.3);
+        }
+
+        .alert-banner.warning {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(251, 191, 36, 0.05) 100%);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .alert-banner.danger {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(248, 113, 113, 0.05) 100%);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            animation: pulse-danger 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-danger {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+            50% { box-shadow: 0 0 20px 0 rgba(239, 68, 68, 0.2); }
+        }
+
+        .alert-icon {
+            font-size: 1.5rem;
+        }
+
+        .alert-content h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .alert-content p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Year Controls */
+        .year-controls {
+            display: flex;
+            align-items: flex-end;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .year-legend {
+            display: flex;
+            gap: 1.5rem;
+            padding-bottom: 0.5rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 4px;
+        }
+
+        .legend-dot.current {
+            background: var(--gradient-secondary);
+        }
+
+        .legend-dot.next {
+            background: var(--gradient-primary);
+        }
+
+        /* Monthly Bars */
+        .meses-section {
+            grid-column: span 12;
+        }
+
+        .meses-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .mes-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .mes-bar-container {
+            width: 100%;
+            height: 180px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: border-color 0.3s ease;
+        }
+
+        .mes-bar-container:hover {
+            border-color: var(--accent-primary);
+        }
+
+        .mes-bar-container.active {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 2px rgba(0, 212, 170, 0.2);
+        }
+
+        .mes-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--gradient-secondary);
+            border-radius: 0 0 10px 10px;
+            transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .mes-bar.over-sueldo {
+            background: var(--gradient-danger);
+        }
+
+        .mes-bar.warning {
+            background: var(--gradient-warning);
+        }
+
+        .mes-amount {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            text-align: center;
+            z-index: 2;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .mes-bar-container:hover .mes-amount {
+            opacity: 1;
+        }
+
+        .mes-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .mes-year {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            font-family: 'Space Mono', monospace;
+        }
+
+        .mes-year-select {
+            width: 100%;
+            padding: 0.25rem;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65rem;
+            text-align: center;
+            cursor: pointer;
+            margin-top: 0.25rem;
+        }
+
+        .mes-bar.next-year {
+            background: var(--gradient-primary);
+        }
+
+        .mes-input-wrapper {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            width: 90%;
+        }
+
+        .mes-bar-container.active .mes-input-wrapper {
+            display: block;
+        }
+
+        .mes-bar-container.active .mes-amount {
+            display: none;
+        }
+
+        .mes-input {
+            width: 100%;
+            padding: 0.5rem;
+            background: var(--input-bg);
+            border: 2px solid var(--accent-primary);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8rem;
+            text-align: center;
+        }
+
+        .mes-input:focus {
+            outline: none;
+        }
+
+        /* Summary Stats */
+        .summary-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .summary-item {
+            text-align: center;
+        }
+
+        .summary-value {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .summary-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Sueldo Reference Line */
+        .sueldo-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--accent-warning);
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .sueldo-line::before {
+            content: 'SUELDO';
+            position: absolute;
+            right: -10px;
+            top: -8px;
+            font-size: 0.5rem;
+            color: var(--accent-warning);
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        /* Info Panel */
+        .info-section {
+            grid-column: span 12;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .info-card {
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 1.25rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .info-card h4 {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+        }
+
+        .info-value {
+            font-family: 'Space Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .info-detail {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .limite-section,
+            .status-section {
+                grid-column: span 12;
+            }
+            
+            .meses-grid {
+                grid-template-columns: repeat(6, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .app-container {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 1.75rem;
+            }
+
+            .meses-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .summary-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .meses-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .limite-inputs {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Tooltips */
+        .tooltip {
+            position: relative;
+        }
+
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 0.5rem 0.75rem;
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            font-size: 0.75rem;
+            border-radius: 8px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 100;
+        }
+
+        .tooltip:hover::after {
+            opacity: 1;
+        }
+
+        /* SVG Gradient Definition */
+        .svg-defs {
+            position: absolute;
+            width: 0;
+            height: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- SVG Definitions -->
+    <svg class="svg-defs">
+        <defs>
+            <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#00d4aa"/>
+                <stop offset="100%" stop-color="#00b894"/>
+            </linearGradient>
+            <linearGradient id="progressGradientWarning" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#f59e0b"/>
+                <stop offset="100%" stop-color="#fbbf24"/>
+            </linearGradient>
+            <linearGradient id="progressGradientDanger" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#ef4444"/>
+                <stop offset="100%" stop-color="#f87171"/>
+            </linearGradient>
+        </defs>
+    </svg>
+
+    <div class="app-container">
+        <header class="header">
+            <h1>💳 Simulador de Gastos</h1>
+            <p>Control de tarjeta de crédito MercadoPago</p>
+        </header>
+
+        <div class="dashboard-grid">
+            <!-- Sueldo y Configuración -->
+            <section class="card sueldo-section">
+                <div class="card-header">
+                    <div class="card-icon green">💰</div>
+                    <div>
+                        <div class="card-title">Configuración de Ingresos y Límites</div>
+                        <div class="card-subtitle">Datos base para el cálculo</div>
+                    </div>
+                </div>
+                <div class="sueldo-content">
+                    <div class="input-group">
+                        <label>Sueldo Mensual</label>
+                        <div class="input-wrapper">
+                            <span class="input-prefix">$</span>
+                            <input type="number" id="sueldo" placeholder="0" value="0">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Límite Total de la Tarjeta</label>
+                        <div class="input-wrapper">
+                            <span class="input-prefix">$</span>
+                            <input type="number" id="limiteTotal" placeholder="0" value="0">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Fecha de Cierre (día del mes)</label>
+                        <div class="input-wrapper">
+                            <span class="input-prefix">📅</span>
+                            <input type="number" id="fechaCierre" placeholder="15" value="15" min="1" max="31">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Alert Banner -->
+            <div id="alertBanner" class="alert-banner ok">
+                <span class="alert-icon">✅</span>
+                <div class="alert-content">
+                    <h3>Estado Financiero Saludable</h3>
+                    <p>Los gastos están dentro del rango del sueldo mensual.</p>
+                </div>
+            </div>
+
+            <!-- Límite Disponible - Círculo -->
+            <section class="card limite-section">
+                <div class="card-header">
+                    <div class="card-icon purple">📊</div>
+                    <div>
+                        <div class="card-title">Límite Disponible</div>
+                        <div class="card-subtitle">Control de uso de la tarjeta</div>
+                    </div>
+                </div>
+                <div class="circular-progress-container">
+                    <div class="circular-progress">
+                        <svg viewBox="0 0 100 100">
+                            <circle class="bg" cx="50" cy="50" r="42"/>
+                            <circle class="progress" id="progressCircle" cx="50" cy="50" r="42" 
+                                stroke-dasharray="263.89" stroke-dashoffset="263.89"/>
+                        </svg>
+                        <div class="center-text">
+                            <div class="amount" id="limiteDisponibleDisplay">$0</div>
+                            <div class="label">disponible</div>
+                            <div class="percentage" id="porcentajeUso">0% usado</div>
+                        </div>
+                    </div>
+                    <div class="limite-inputs">
+                        <div class="input-group">
+                            <label>Límite Disponible Actual</label>
+                            <div class="input-wrapper">
+                                <span class="input-prefix">$</span>
+                                <input type="number" id="limiteDisponible" placeholder="0" value="0">
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>Consumo Pendiente</label>
+                            <div class="input-wrapper">
+                                <span class="input-prefix">$</span>
+                                <input type="number" id="consumoPendiente" placeholder="0" value="0" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Status Grid -->
+            <section class="card status-section">
+                <div class="card-header">
+                    <div class="card-icon orange">📈</div>
+                    <div>
+                        <div class="card-title">Resumen Rápido</div>
+                        <div class="card-subtitle">Métricas importantes</div>
+                    </div>
+                </div>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="status-value positive" id="ratioGastoSueldo">0%</div>
+                        <div class="status-label">Gasto/Sueldo</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-value info" id="sueldosNecesarios">0</div>
+                        <div class="status-label">Sueldos Necesarios</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-value" id="promedioMensual">$0</div>
+                        <div class="status-label">Promedio Mensual</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-value" id="mesMaxGasto">-</div>
+                        <div class="status-label">Mes Máx. Gasto</div>
+                    </div>
+                </div>
+                <div class="info-grid" style="margin-top: 1.5rem;">
+                    <div class="info-card">
+                        <h4>Deuda Acumulada</h4>
+                        <div class="info-value" id="deudaTotal">$0</div>
+                        <div class="info-detail">Total a pagar en resúmenes</div>
+                    </div>
+                    <div class="info-card">
+                        <h4>Margen Disponible</h4>
+                        <div class="info-value positive" id="margenDisponible">$0</div>
+                        <div class="info-detail">Después de cubrir gastos</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Gráfico de Barras por Mes -->
+            <section class="card meses-section">
+                <div class="card-header">
+                    <div class="card-icon blue">📅</div>
+                    <div>
+                        <div class="card-title">Resumen por Mes</div>
+                        <div class="card-subtitle">Hacé clic en cada mes para editar el monto. Podés cambiar el año de cada mes.</div>
+                    </div>
+                </div>
+                
+                <!-- Año base selector -->
+                <div class="year-controls">
+                    <div class="input-group" style="max-width: 200px;">
+                        <label>Año Base de Visualización</label>
+                        <select id="anioBase">
+                            <!-- Generated by JS -->
+                        </select>
+                    </div>
+                    <div class="year-legend">
+                        <span class="legend-item"><span class="legend-dot current"></span> Año actual</span>
+                        <span class="legend-item"><span class="legend-dot next"></span> Año siguiente</span>
+                    </div>
+                </div>
+                
+                <div class="meses-grid" id="mesesGrid">
+                    <!-- Generated by JS -->
+                </div>
+                <div class="summary-row">
+                    <div class="summary-item">
+                        <div class="summary-value positive" id="totalAnual">$0</div>
+                        <div class="summary-label">Total Período</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-value" id="promedioAnual">$0</div>
+                        <div class="summary-label">Promedio</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-value warning" id="mesesSobreSueldo">0</div>
+                        <div class="summary-label">Meses Excedidos</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-value info" id="tendencia">→</div>
+                        <div class="summary-label">Tendencia</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Panel de Información -->
+            <section class="card info-section">
+                <div class="card-header">
+                    <div class="card-icon green">💡</div>
+                    <div>
+                        <div class="card-title">Análisis y Recomendaciones</div>
+                        <div class="card-subtitle">Basado en tus datos actuales</div>
+                    </div>
+                </div>
+                <div class="info-grid" id="recomendaciones">
+                    <!-- Generated by JS -->
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // Data storage
+        const MESES = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
+        const MESES_FULL = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        
+        const currentYear = new Date().getFullYear();
+        let gastosMensuales = new Array(12).fill(0);
+        let aniosMensuales = new Array(12).fill(currentYear);
+        let anioBase = currentYear;
+        let activeMes = null;
+
+        // Local storage functions
+        function saveData() {
+            const data = {
+                sueldo: document.getElementById('sueldo').value,
+                limiteTotal: document.getElementById('limiteTotal').value,
+                limiteDisponible: document.getElementById('limiteDisponible').value,
+                fechaCierre: document.getElementById('fechaCierre').value,
+                gastosMensuales: gastosMensuales,
+                aniosMensuales: aniosMensuales,
+                anioBase: anioBase
+            };
+            localStorage.setItem('simuladorTarjeta', JSON.stringify(data));
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('simuladorTarjeta');
+            if (saved) {
+                const data = JSON.parse(saved);
+                document.getElementById('sueldo').value = data.sueldo || 0;
+                document.getElementById('limiteTotal').value = data.limiteTotal || 0;
+                document.getElementById('limiteDisponible').value = data.limiteDisponible || 0;
+                document.getElementById('fechaCierre').value = data.fechaCierre || 15;
+                gastosMensuales = data.gastosMensuales || new Array(12).fill(0);
+                aniosMensuales = data.aniosMensuales || new Array(12).fill(currentYear);
+                anioBase = data.anioBase || currentYear;
+            }
+        }
+
+        // Format currency
+        function formatCurrency(amount) {
+            return '$' + Math.round(amount).toLocaleString('es-AR');
+        }
+
+        // Initialize year selector
+        function initYearSelector() {
+            const select = document.getElementById('anioBase');
+            select.innerHTML = '';
+            
+            for (let year = currentYear - 1; year <= currentYear + 2; year++) {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                if (year === anioBase) option.selected = true;
+                select.appendChild(option);
+            }
+            
+            select.addEventListener('change', function() {
+                anioBase = parseInt(this.value);
+                // Update all month years to at least anioBase
+                aniosMensuales = aniosMensuales.map((y, i) => {
+                    if (y < anioBase) return anioBase;
+                    if (y > anioBase + 1) return anioBase + 1;
+                    return y;
+                });
+                initMesesGrid();
+                updateAll();
+                saveData();
+            });
+        }
+
+        // Initialize month bars
+        function initMesesGrid() {
+            const grid = document.getElementById('mesesGrid');
+            grid.innerHTML = '';
+
+            MESES.forEach((mes, index) => {
+                const column = document.createElement('div');
+                column.className = 'mes-column';
+                
+                const yearOptions = `
+                    <option value="${anioBase}" ${aniosMensuales[index] === anioBase ? 'selected' : ''}>${anioBase}</option>
+                    <option value="${anioBase + 1}" ${aniosMensuales[index] === anioBase + 1 ? 'selected' : ''}>${anioBase + 1}</option>
+                `;
+                
+                column.innerHTML = `
+                    <div class="mes-bar-container" data-mes="${index}">
+                        <div class="sueldo-line" id="sueldoLine${index}"></div>
+                        <div class="mes-bar" id="mesBar${index}"></div>
+                        <div class="mes-amount" id="mesAmount${index}">${formatCurrency(0)}</div>
+                        <div class="mes-input-wrapper">
+                            <input type="number" class="mes-input" id="mesInput${index}" 
+                                   placeholder="0" value="${gastosMensuales[index]}">
+                        </div>
+                    </div>
+                    <span class="mes-label">${mes}</span>
+                    <select class="mes-year-select" id="mesYear${index}">
+                        ${yearOptions}
+                    </select>
+                `;
+                grid.appendChild(column);
+            });
+
+            // Add click handlers for bars
+            document.querySelectorAll('.mes-bar-container').forEach(container => {
+                container.addEventListener('click', function(e) {
+                    const mesIndex = parseInt(this.dataset.mes);
+                    
+                    // Deactivate previous
+                    if (activeMes !== null && activeMes !== mesIndex) {
+                        document.querySelector(`.mes-bar-container[data-mes="${activeMes}"]`).classList.remove('active');
+                    }
+                    
+                    this.classList.toggle('active');
+                    activeMes = this.classList.contains('active') ? mesIndex : null;
+                    
+                    if (activeMes !== null) {
+                        const input = document.getElementById(`mesInput${mesIndex}`);
+                        input.focus();
+                        input.select();
+                    }
+                });
+            });
+
+            // Add input handlers for amounts
+            document.querySelectorAll('.mes-input').forEach((input, index) => {
+                input.addEventListener('input', function() {
+                    gastosMensuales[index] = parseFloat(this.value) || 0;
+                    updateAll();
+                    saveData();
+                });
+                
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === 'Escape') {
+                        const container = this.closest('.mes-bar-container');
+                        container.classList.remove('active');
+                        activeMes = null;
+                    }
+                    if (e.key === 'Tab') {
+                        e.preventDefault();
+                        const nextIndex = (index + 1) % 12;
+                        const currentContainer = this.closest('.mes-bar-container');
+                        currentContainer.classList.remove('active');
+                        
+                        const nextContainer = document.querySelector(`.mes-bar-container[data-mes="${nextIndex}"]`);
+                        nextContainer.classList.add('active');
+                        activeMes = nextIndex;
+                        
+                        const nextInput = document.getElementById(`mesInput${nextIndex}`);
+                        nextInput.focus();
+                        nextInput.select();
+                    }
+                });
+
+                input.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            });
+
+            // Add year select handlers
+            document.querySelectorAll('.mes-year-select').forEach((select, index) => {
+                select.addEventListener('change', function() {
+                    aniosMensuales[index] = parseInt(this.value);
+                    updateMesesBars();
+                    saveData();
+                });
+            });
+        }
+
+        // Update month bars visualization
+        function updateMesesBars() {
+            const sueldo = parseFloat(document.getElementById('sueldo').value) || 0;
+            const maxGasto = Math.max(...gastosMensuales, sueldo);
+            const barHeight = 180; // pixels
+
+            gastosMensuales.forEach((gasto, index) => {
+                const bar = document.getElementById(`mesBar${index}`);
+                const amount = document.getElementById(`mesAmount${index}`);
+                const sueldoLine = document.getElementById(`sueldoLine${index}`);
+                
+                const heightPercent = maxGasto > 0 ? (gasto / maxGasto) * 100 : 0;
+                bar.style.height = `${heightPercent}%`;
+                
+                // Reset classes
+                bar.classList.remove('over-sueldo', 'warning', 'next-year');
+                
+                // Color based on year
+                if (aniosMensuales[index] > anioBase) {
+                    bar.classList.add('next-year');
+                }
+                
+                // Color based on sueldo (overrides year color if exceeded)
+                if (gasto > sueldo && sueldo > 0) {
+                    bar.classList.remove('next-year');
+                    bar.classList.add('over-sueldo');
+                } else if (gasto > sueldo * 0.8 && sueldo > 0) {
+                    bar.classList.remove('next-year');
+                    bar.classList.add('warning');
+                }
+                
+                // Show year in amount display
+                const yearSuffix = aniosMensuales[index] !== anioBase ? ` '${String(aniosMensuales[index]).slice(-2)}` : '';
+                amount.textContent = formatCurrency(gasto) + yearSuffix;
+
+                // Position sueldo line
+                if (sueldo > 0 && maxGasto > 0) {
+                    const sueldoPercent = (sueldo / maxGasto) * 100;
+                    sueldoLine.style.bottom = `${sueldoPercent}%`;
+                    sueldoLine.style.display = 'block';
+                } else {
+                    sueldoLine.style.display = 'none';
+                }
+            });
+        }
+
+        // Update circular progress
+        function updateCircularProgress() {
+            const limiteTotal = parseFloat(document.getElementById('limiteTotal').value) || 0;
+            const limiteDisponible = parseFloat(document.getElementById('limiteDisponible').value) || 0;
+            
+            const consumo = limiteTotal - limiteDisponible;
+            const porcentajeUsado = limiteTotal > 0 ? (consumo / limiteTotal) * 100 : 0;
+            
+            document.getElementById('consumoPendiente').value = Math.max(0, consumo);
+            
+            // Update circle
+            const circle = document.getElementById('progressCircle');
+            const circumference = 2 * Math.PI * 42;
+            const offset = circumference - (porcentajeUsado / 100) * circumference;
+            circle.style.strokeDashoffset = offset;
+            
+            // Update gradient based on percentage
+            if (porcentajeUsado > 80) {
+                circle.style.stroke = 'url(#progressGradientDanger)';
+            } else if (porcentajeUsado > 60) {
+                circle.style.stroke = 'url(#progressGradientWarning)';
+            } else {
+                circle.style.stroke = 'url(#progressGradient)';
+            }
+            
+            // Update display
+            document.getElementById('limiteDisponibleDisplay').textContent = formatCurrency(limiteDisponible);
+            document.getElementById('porcentajeUso').textContent = `${Math.round(porcentajeUsado)}% usado`;
+        }
+
+        // Update statistics
+        function updateStats() {
+            const sueldo = parseFloat(document.getElementById('sueldo').value) || 0;
+            const totalGastos = gastosMensuales.reduce((a, b) => a + b, 0);
+            const mesesConGasto = gastosMensuales.filter(g => g > 0).length;
+            const promedio = mesesConGasto > 0 ? totalGastos / mesesConGasto : 0;
+            
+            // Ratio gasto/sueldo (próximo resumen - mes actual)
+            const mesActual = new Date().getMonth();
+            const gastoMesActual = gastosMensuales[mesActual];
+            const ratio = sueldo > 0 ? (gastoMesActual / sueldo) * 100 : 0;
+            
+            const ratioElement = document.getElementById('ratioGastoSueldo');
+            ratioElement.textContent = `${Math.round(ratio)}%`;
+            ratioElement.className = 'status-value ' + (ratio > 100 ? 'danger' : ratio > 80 ? 'warning' : 'positive');
+            
+            // Sueldos necesarios
+            const sueldosNecesarios = sueldo > 0 ? Math.ceil(gastoMesActual / sueldo) : 0;
+            const sueldosElement = document.getElementById('sueldosNecesarios');
+            sueldosElement.textContent = sueldosNecesarios;
+            sueldosElement.className = 'status-value ' + (sueldosNecesarios > 1 ? 'danger' : 'info');
+            
+            // Promedio mensual
+            document.getElementById('promedioMensual').textContent = formatCurrency(promedio);
+            
+            // Mes máximo gasto (con año)
+            const maxGasto = Math.max(...gastosMensuales);
+            const mesMax = gastosMensuales.indexOf(maxGasto);
+            const mesMaxYear = aniosMensuales[mesMax];
+            document.getElementById('mesMaxGasto').textContent = maxGasto > 0 ? 
+                `${MESES[mesMax]} '${String(mesMaxYear).slice(-2)}` : '-';
+            
+            // Totales
+            document.getElementById('totalAnual').textContent = formatCurrency(totalGastos);
+            document.getElementById('promedioAnual').textContent = formatCurrency(promedio);
+            
+            // Meses sobre sueldo
+            const mesesSobre = sueldo > 0 ? gastosMensuales.filter(g => g > sueldo).length : 0;
+            const mesesSobreElement = document.getElementById('mesesSobreSueldo');
+            mesesSobreElement.textContent = mesesSobre;
+            mesesSobreElement.className = 'status-value ' + (mesesSobre > 0 ? 'danger' : 'positive');
+            
+            // Tendencia (basada en los últimos 3 meses con datos)
+            const mesesConDatos = gastosMensuales
+                .map((g, i) => ({ gasto: g, index: i }))
+                .filter(m => m.gasto > 0);
+            
+            let tendencia = '→';
+            if (mesesConDatos.length >= 2) {
+                const ultimos = mesesConDatos.slice(-3);
+                const diff = ultimos[ultimos.length - 1].gasto - ultimos[0].gasto;
+                if (diff > promedio * 0.1) tendencia = '↗️';
+                else if (diff < -promedio * 0.1) tendencia = '↘️';
+            }
+            document.getElementById('tendencia').textContent = tendencia;
+            
+            // Deuda total y margen
+            const limiteTotal = parseFloat(document.getElementById('limiteTotal').value) || 0;
+            const limiteDisponible = parseFloat(document.getElementById('limiteDisponible').value) || 0;
+            const deuda = limiteTotal - limiteDisponible;
+            
+            document.getElementById('deudaTotal').textContent = formatCurrency(Math.max(0, deuda));
+            
+            const margen = sueldo - gastoMesActual;
+            const margenElement = document.getElementById('margenDisponible');
+            margenElement.textContent = formatCurrency(margen);
+            margenElement.className = 'info-value ' + (margen < 0 ? 'danger' : 'positive');
+            
+            return { ratio, sueldosNecesarios, mesesSobre, margen, gastoMesActual, promedio };
+        }
+
+        // Update alert banner
+        function updateAlert(stats) {
+            const banner = document.getElementById('alertBanner');
+            const sueldo = parseFloat(document.getElementById('sueldo').value) || 0;
+            
+            if (sueldo === 0) {
+                banner.className = 'alert-banner ok';
+                banner.innerHTML = `
+                    <span class="alert-icon">ℹ️</span>
+                    <div class="alert-content">
+                        <h3>Configurá tu sueldo</h3>
+                        <p>Ingresá el sueldo mensual para obtener análisis detallados.</p>
+                    </div>
+                `;
+            } else if (stats.sueldosNecesarios > 1) {
+                banner.className = 'alert-banner danger';
+                banner.innerHTML = `
+                    <span class="alert-icon">⚠️</span>
+                    <div class="alert-content">
+                        <h3>¡Atención! Necesitás ${stats.sueldosNecesarios} sueldos</h3>
+                        <p>El gasto del mes actual (${formatCurrency(stats.gastoMesActual)}) excede tu sueldo. Vas a necesitar esperar más de un cobro para cubrir el resumen.</p>
+                    </div>
+                `;
+            } else if (stats.ratio > 80) {
+                banner.className = 'alert-banner warning';
+                banner.innerHTML = `
+                    <span class="alert-icon">⚡</span>
+                    <div class="alert-content">
+                        <h3>Gastos elevados este mes</h3>
+                        <p>Estás usando el ${Math.round(stats.ratio)}% de tu sueldo en la tarjeta. Considerá reducir gastos.</p>
+                    </div>
+                `;
+            } else {
+                banner.className = 'alert-banner ok';
+                banner.innerHTML = `
+                    <span class="alert-icon">✅</span>
+                    <div class="alert-content">
+                        <h3>Estado Financiero Saludable</h3>
+                        <p>Los gastos están dentro del rango de tu sueldo mensual. Margen disponible: ${formatCurrency(stats.margen)}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Update recommendations
+        function updateRecomendaciones(stats) {
+            const container = document.getElementById('recomendaciones');
+            const sueldo = parseFloat(document.getElementById('sueldo').value) || 0;
+            const limiteTotal = parseFloat(document.getElementById('limiteTotal').value) || 0;
+            
+            let recomendaciones = [];
+            
+            if (stats.sueldosNecesarios > 1) {
+                recomendaciones.push({
+                    icon: '🔴',
+                    title: 'Reducir Gastos Urgente',
+                    text: `Necesitás reducir ${formatCurrency(stats.gastoMesActual - sueldo)} para cubrir con un solo sueldo.`
+                });
+            }
+            
+            if (stats.mesesSobre > 3) {
+                recomendaciones.push({
+                    icon: '📊',
+                    title: 'Patrón de Exceso',
+                    text: `${stats.mesesSobre} de 12 meses excedieron tu sueldo. Revisá tus hábitos de consumo.`
+                });
+            }
+            
+            const usoLimite = limiteTotal > 0 ? ((limiteTotal - parseFloat(document.getElementById('limiteDisponible').value)) / limiteTotal) * 100 : 0;
+            if (usoLimite > 70) {
+                recomendaciones.push({
+                    icon: '💳',
+                    title: 'Límite Alto',
+                    text: `Estás usando el ${Math.round(usoLimite)}% de tu límite total. Cuidado con nuevos gastos.`
+                });
+            }
+            
+            if (stats.promedio > 0 && sueldo > 0) {
+                const proyeccion = stats.promedio * 12;
+                recomendaciones.push({
+                    icon: '📈',
+                    title: 'Proyección Anual',
+                    text: `A este ritmo, gastarás ${formatCurrency(proyeccion)} en el año (${Math.round(proyeccion / sueldo / 12 * 100)}% del sueldo promedio).`
+                });
+            }
+            
+            if (recomendaciones.length === 0) {
+                recomendaciones.push({
+                    icon: '🎯',
+                    title: 'Todo en Orden',
+                    text: 'Tus gastos están controlados. ¡Seguí así!'
+                });
+            }
+            
+            container.innerHTML = recomendaciones.map(rec => `
+                <div class="info-card">
+                    <h4>${rec.icon} ${rec.title}</h4>
+                    <div class="info-detail">${rec.text}</div>
+                </div>
+            `).join('');
+        }
+
+        // Main update function
+        function updateAll() {
+            updateMesesBars();
+            updateCircularProgress();
+            const stats = updateStats();
+            updateAlert(stats);
+            updateRecomendaciones(stats);
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            initYearSelector();
+            initMesesGrid();
+            updateAll();
+
+            // Add input listeners
+            ['sueldo', 'limiteTotal', 'limiteDisponible', 'fechaCierre'].forEach(id => {
+                document.getElementById(id).addEventListener('input', function() {
+                    updateAll();
+                    saveData();
+                });
+            });
+
+            // Close active month when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.mes-bar-container') && activeMes !== null) {
+                    document.querySelector(`.mes-bar-container[data-mes="${activeMes}"]`).classList.remove('active');
+                    activeMes = null;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
