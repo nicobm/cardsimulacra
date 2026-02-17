@@ -576,19 +576,25 @@
 
         .mes-amount {
             position: absolute;
-            top: 8px;
+            top: 6px;
             left: 50%;
             transform: translateX(-50%);
             font-family: 'Space Mono', monospace;
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             font-weight: 700;
             color: var(--text-primary);
             text-align: center;
-            z-index: 2;
-            background: var(--bg-card);
-            padding: 2px 6px;
+            z-index: 5;
+            background: var(--bg-secondary);
+            padding: 3px 5px;
             border-radius: 4px;
+            border: 1px solid var(--border-color);
             white-space: nowrap;
+            pointer-events: none;
+        }
+        
+        .mes-bar-container.active .mes-amount {
+            opacity: 0.5;
         }
 
         .mes-label {
@@ -861,6 +867,13 @@
                         </div>
                     </div>
                     <div class="input-group">
+                        <label>Ahorro Disponible</label>
+                        <div class="input-wrapper">
+                            <span class="input-prefix">$</span>
+                            <input type="number" id="ahorro" placeholder="0" value="0">
+                        </div>
+                    </div>
+                    <div class="input-group">
                         <label>Límite Total de la Tarjeta</label>
                         <div class="input-wrapper">
                             <span class="input-prefix">$</span>
@@ -1060,6 +1073,7 @@
         function saveData() {
             const data = {
                 sueldo: document.getElementById('sueldo').value,
+                ahorro: document.getElementById('ahorro').value,
                 limiteTotal: document.getElementById('limiteTotal').value,
                 limiteDisponible: document.getElementById('limiteDisponible').value,
                 fechaCierre: document.getElementById('fechaCierre').value,
@@ -1075,6 +1089,7 @@
             if (saved) {
                 const data = JSON.parse(saved);
                 document.getElementById('sueldo').value = data.sueldo || 0;
+                document.getElementById('ahorro').value = data.ahorro || 0;
                 document.getElementById('limiteTotal').value = data.limiteTotal || 0;
                 document.getElementById('limiteDisponible').value = data.limiteDisponible || 0;
                 document.getElementById('fechaCierre').value = data.fechaCierre || 15;
@@ -1130,14 +1145,16 @@
                     <option value="${anioBase + 1}" ${aniosMensuales[index] === anioBase + 1 ? 'selected' : ''}>${anioBase + 1}</option>
                 `;
                 
+                const gastoActual = gastosMensuales[index] || 0;
+                
                 column.innerHTML = `
                     <div class="mes-bar-container" data-mes="${index}">
                         <div class="sueldo-line" id="sueldoLine${index}"></div>
                         <div class="mes-bar" id="mesBar${index}"></div>
-                        <div class="mes-amount" id="mesAmount${index}">${formatCurrency(0)}</div>
+                        <div class="mes-amount" id="mesAmount${index}">${formatCurrency(gastoActual)}</div>
                         <div class="mes-input-wrapper">
                             <input type="number" class="mes-input" id="mesInput${index}" 
-                                   placeholder="0" value="${gastosMensuales[index]}">
+                                   placeholder="0" value="${gastoActual}">
                         </div>
                     </div>
                     <span class="mes-label">${mes}</span>
@@ -1151,6 +1168,8 @@
             // Add click handlers for bars
             document.querySelectorAll('.mes-bar-container').forEach(container => {
                 container.addEventListener('click', function(e) {
+                    if (e.target.classList.contains('mes-input')) return;
+                    
                     const mesIndex = parseInt(this.dataset.mes);
                     
                     // Deactivate previous
@@ -1172,7 +1191,14 @@
             // Add input handlers for amounts
             document.querySelectorAll('.mes-input').forEach((input, index) => {
                 input.addEventListener('input', function() {
-                    gastosMensuales[index] = parseFloat(this.value) || 0;
+                    const valor = parseFloat(this.value) || 0;
+                    gastosMensuales[index] = valor;
+                    
+                    // Actualizar el display del monto inmediatamente
+                    const amountDisplay = document.getElementById(`mesAmount${index}`);
+                    const yearSuffix = aniosMensuales[index] !== anioBase ? ` '${String(aniosMensuales[index]).slice(-2)}` : '';
+                    amountDisplay.textContent = formatCurrency(valor) + yearSuffix;
+                    
                     updateAll();
                     saveData();
                 });
@@ -1293,6 +1319,7 @@
         // Update statistics
         function updateStats() {
             const sueldo = parseFloat(document.getElementById('sueldo').value) || 0;
+            const ahorro = parseFloat(document.getElementById('ahorro').value) || 0;
             const totalGastos = gastosMensuales.reduce((a, b) => a + b, 0);
             const mesesConGasto = gastosMensuales.filter(g => g > 0).length;
             const promedio = mesesConGasto > 0 ? totalGastos / mesesConGasto : 0;
@@ -1346,15 +1373,19 @@
             document.getElementById('disponibleTarjeta').textContent = formatCurrency(limiteDisponible);
             
             // Calcular sueldos necesarios para pagar el consumo actual
-            const sueldosNecesarios = sueldo > 0 ? Math.ceil(consumido / sueldo) : 0;
+            // Considerando el ahorro disponible
+            const deudaNeta = Math.max(0, consumido - ahorro);
+            const sueldosNecesarios = sueldo > 0 ? Math.ceil(deudaNeta / sueldo) : 0;
             const sueldosExcedidos = Math.max(0, sueldosNecesarios - 1);
             
             return { 
                 sueldo,
+                ahorro,
                 gastoMesActual, 
                 promedio, 
                 mesesSobre, 
                 consumido,
+                deudaNeta,
                 limiteDisponible,
                 sueldosNecesarios,
                 sueldosExcedidos,
@@ -1430,7 +1461,7 @@
             if (stats.consumido === 0) {
                 container.innerHTML = `
                     <p class="resumen-texto">
-                        No hay consumo en la tarjeta todavía. El sueldo es de <span class="numero bueno">${formatCurrency(stats.sueldo)}</span>.
+                        No hay consumo en la tarjeta todavía. El sueldo es de <span class="numero bueno">${formatCurrency(stats.sueldo)}</span>${stats.ahorro > 0 ? ` y tenés <span class="numero bueno">${formatCurrency(stats.ahorro)}</span> de ahorro` : ''}.
                     </p>
                 `;
                 return;
@@ -1439,16 +1470,39 @@
             let texto = '';
             let detalle = '';
             
+            // Info de ahorro
+            const ahorroTexto = stats.ahorro > 0 ? 
+                `<br>Tenés <span class="numero bueno">${formatCurrency(stats.ahorro)}</span> de ahorro disponible.` : '';
+            
+            const deudaConAhorro = stats.ahorro > 0 && stats.ahorro < stats.consumido ?
+                `<br>Después de usar el ahorro, quedan <span class="numero">${formatCurrency(stats.deudaNeta)}</span> por cubrir con sueldos.` : '';
+            
             // La explicación principal
-            if (stats.sueldosExcedidos === 0) {
+            if (stats.ahorro >= stats.consumido) {
+                // El ahorro cubre todo
                 texto = `
                     <p class="resumen-texto">
-                        Tenemos <span class="numero bueno">${formatCurrency(stats.consumido)}</span> gastados en la tarjeta.<br>
+                        Tenemos <span class="numero">${formatCurrency(stats.consumido)}</span> gastados en la tarjeta.${ahorroTexto}<br><br>
+                        <strong>El ahorro alcanza para cubrir todo</strong>, sobran <span class="numero bueno">${formatCurrency(stats.ahorro - stats.consumido)}</span>.
+                    </p>
+                `;
+                detalle = `
+                    <div class="resumen-detalle">
+                        <div class="resumen-item">
+                            <span class="resumen-item-label">Ahorro después de pagar:</span>
+                            <span class="resumen-item-value" style="color: var(--accent-primary)">${formatCurrency(stats.ahorro - stats.consumido)}</span>
+                        </div>
+                    </div>
+                `;
+            } else if (stats.sueldosExcedidos === 0) {
+                texto = `
+                    <p class="resumen-texto">
+                        Tenemos <span class="numero bueno">${formatCurrency(stats.consumido)}</span> gastados en la tarjeta.${ahorroTexto}${deudaConAhorro}<br>
                         Como el sueldo es de <span class="numero">${formatCurrency(stats.sueldo)}</span>, <strong>con un sueldo alcanza para pagar</strong>.
                     </p>
                 `;
                 
-                const sobra = stats.sueldo - stats.consumido;
+                const sobra = stats.sueldo - stats.deudaNeta;
                 if (sobra > 0) {
                     detalle = `
                         <div class="resumen-detalle">
@@ -1458,18 +1512,18 @@
                             </div>
                             <div class="resumen-item">
                                 <span class="resumen-item-label">Porcentaje usado:</span>
-                                <span class="resumen-item-value">${Math.round(stats.consumido / stats.sueldo * 100)}%</span>
+                                <span class="resumen-item-value">${Math.round(stats.deudaNeta / stats.sueldo * 100)}%</span>
                             </div>
                         </div>
                     `;
                 }
             } else if (stats.sueldosExcedidos === 1) {
-                const falta = stats.consumido - stats.sueldo;
+                const falta = stats.deudaNeta - stats.sueldo;
                 texto = `
                     <p class="resumen-texto">
-                        Tenemos <span class="numero warning">${formatCurrency(stats.consumido)}</span> gastados en la tarjeta.<br>
+                        Tenemos <span class="numero warning">${formatCurrency(stats.consumido)}</span> gastados en la tarjeta.${ahorroTexto}${deudaConAhorro}<br>
                         El sueldo es de <span class="numero">${formatCurrency(stats.sueldo)}</span>, así que <strong>necesitamos esperar 2 sueldos</strong> para pagar todo.<br><br>
-                        Básicamente: con el primer sueldo pagamos ${formatCurrency(stats.sueldo)}, y nos quedan <span class="numero warning">${formatCurrency(falta)}</span> que hay que cubrir con el segundo sueldo.
+                        Con el primer sueldo pagamos ${formatCurrency(stats.sueldo)}, y nos quedan <span class="numero warning">${formatCurrency(falta)}</span> que hay que cubrir con el segundo sueldo.
                     </p>
                 `;
                 detalle = `
@@ -1485,10 +1539,10 @@
                     </div>
                 `;
             } else {
-                const falta = stats.consumido - stats.sueldo;
+                const falta = stats.deudaNeta - stats.sueldo;
                 texto = `
                     <p class="resumen-texto">
-                        Tenemos <span class="numero malo">${formatCurrency(stats.consumido)}</span> gastados en la tarjeta.<br>
+                        Tenemos <span class="numero malo">${formatCurrency(stats.consumido)}</span> gastados en la tarjeta.${ahorroTexto}${deudaConAhorro}<br>
                         El sueldo es de <span class="numero">${formatCurrency(stats.sueldo)}</span>, así que <strong>necesitamos ${stats.sueldosNecesarios} sueldos</strong> para pagar todo.<br><br>
                         Estamos excedidos en <span class="numero malo">${formatCurrency(falta)}</span> (${stats.sueldosExcedidos} ${stats.sueldosExcedidos === 1 ? 'sueldo' : 'sueldos'} de más).
                     </p>
@@ -1592,7 +1646,7 @@
             updateAll();
 
             // Add input listeners
-            ['sueldo', 'limiteTotal', 'limiteDisponible', 'fechaCierre'].forEach(id => {
+            ['sueldo', 'ahorro', 'limiteTotal', 'limiteDisponible', 'fechaCierre'].forEach(id => {
                 document.getElementById(id).addEventListener('input', function() {
                     updateAll();
                     saveData();
